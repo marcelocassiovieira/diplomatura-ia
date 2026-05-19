@@ -121,18 +121,17 @@ Tasa global de cancelación tras limpieza: **27,5 %** sobre 87.228 reservas.
 .
 ├── README.md                   # Descripción del proyecto y conclusiones
 ├── hotel_bookings.csv          # Dataset utilizado
-└── tp1/
-    └── TP1_hotel_bookings.ipynb # Notebook con el desarrollo completo
+└── TP1_hotel_bookings.ipynb    # Notebook con el desarrollo completo
 ```
 
 ## Cómo reproducir el análisis
 
 ```bash
 pip install pandas numpy matplotlib seaborn jupyter
-jupyter notebook tp1/TP1_hotel_bookings.ipynb
+jupyter notebook TP1_hotel_bookings.ipynb
 ```
 
-Ejecutar todas las celdas en orden. El notebook lee el CSV desde `../hotel_bookings.csv`.
+Ejecutar todas las celdas en orden. El notebook lee el CSV desde `hotel_bookings.csv`.
 
 ## Fuente del dataset
 
