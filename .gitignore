@@ -1,3 +1,10 @@
 .ipynb_checkpoints/
 **/.ipynb_checkpoints/
 **/DEFENSA_TP1.md
+
+# Archivos de bloqueo de LibreOffice
+**/.~lock.*#
+
+# Material de estudio para la defensa (no se entrega)
+**/TP1_hotel_bookings_explicado.ipynb
+**/TP1_paso_a_paso.ipynb
