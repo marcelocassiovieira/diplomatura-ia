@@ -1,0 +1,23 @@
+# Checkpoints de Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Archivos de bloqueo de LibreOffice
+**/.~lock.*#
+
+# Material de estudio para la defensa (no se entrega)
+defensa/
+**/*_explicado.ipynb
+**/*_paso_a_paso.ipynb
+**/DEFENSA_TP2.md
+
+# Residuos que genera CatBoost al entrenar (no aplica al modelo final)
+**/catboost_info/
+
+# NOTA: los datos (data/raw/*.xlsx), los modelos (models/**/*.joblib) y las
+# predicciones (data/processed/predicciones_smoking.csv) SI se versionan a
+# proposito, para que el trabajo corra de punta a punta sin descargas externas.

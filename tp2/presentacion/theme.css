@@ -1,0 +1,187 @@
+/* @theme tp-diplomatura */
+
+@import 'default';
+
+:root {
+  --navy: #1F3A5C;
+  --accent: #3D8FB3;
+  --text-dark: #333333;
+  --text-muted: #5A6B7B;
+  --green: #2E7D5B;
+}
+
+section {
+  font-family: 'Segoe UI', Helvetica, Arial, sans-serif;
+  background: #FFFFFF;
+  color: var(--text-dark);
+  padding: 0;
+  font-size: 24px;
+  display: block !important;
+  place-content: start !important;
+  align-items: start !important;
+}
+
+/* ---- Slide de portada / cierre / separador de seccion ---- */
+section.cover,
+section.section,
+section.closing {
+  background: var(--navy);
+  color: #FFFFFF;
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center !important;
+  padding: 70px 90px;
+}
+
+section.cover h1 {
+  font-size: 44px;
+  font-weight: 700;
+  color: #FFFFFF;
+  border-bottom: 3px solid var(--accent);
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+  width: fit-content;
+}
+
+section.cover p {
+  color: #D7E2EC;
+  font-size: 22px;
+  margin: 4px 0;
+}
+
+section.section .num {
+  font-size: 90px;
+  font-weight: 800;
+  color: var(--accent);
+  position: absolute;
+  left: 90px;
+}
+
+section.section h1 {
+  font-size: 38px;
+  font-weight: 700;
+  color: #FFFFFF;
+  margin-left: 130px;
+}
+
+section.closing h1 {
+  font-size: 52px;
+  font-weight: 800;
+  color: #FFFFFF;
+  text-align: center;
+}
+
+section.closing p {
+  color: #D7E2EC;
+  text-align: center;
+  font-size: 22px;
+}
+
+section.closing .footer {
+  position: absolute;
+  bottom: 50px;
+  width: 100%;
+  text-align: center;
+  font-size: 16px;
+  color: #A9BCCC;
+}
+
+/* ---- Slides de contenido (header con barra navy) ---- */
+section.content {
+  padding: 0;
+}
+
+section.content h1 {
+  background: var(--navy);
+  color: #FFFFFF;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+  padding: 22px 50px;
+  border-bottom: 4px solid var(--accent);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+section.content > *:not(h1) {
+  margin-left: 50px;
+  margin-right: 50px;
+}
+
+section.content h1 + * {
+  margin-top: 30px !important;
+}
+
+section.content table {
+  margin-top: 0;
+}
+
+section.content h2 {
+  color: var(--navy);
+  font-size: 20px;
+  font-weight: 700;
+  margin-top: 22px;
+  margin-bottom: 8px;
+}
+
+section.content h2.green,
+.callout {
+  color: var(--green);
+  font-weight: 700;
+}
+
+section.content ul {
+  margin-top: 4px;
+}
+
+section.content li {
+  font-size: 19px;
+  margin-bottom: 6px;
+  color: var(--text-dark);
+}
+
+section.content p {
+  font-size: 19px;
+  color: var(--text-dark);
+}
+
+/* Chip celeste arriba a la derecha (tipo de grafico / etiqueta) */
+.chip {
+  position: absolute;
+  top: 26px;
+  right: 50px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 18px;
+  border-radius: 6px;
+}
+
+/* Layout de dos columnas: imagen izq, texto der */
+.cols {
+  display: flex;
+  gap: 30px;
+}
+
+.cols .img-col {
+  flex: 1.4;
+}
+
+.cols .img-col img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.cols .text-col {
+  flex: 1;
+}
+
+table {
+  font-size: 17px;
+}
+
+strong {
+  color: var(--navy);
+}
+

@@ -1,0 +1,15 @@
+# Dependencias del TP2 - Clasificacion smoking
+# Instalar con: pip install -r requirements.txt
+# Versiones fijadas para garantizar reproducibilidad del unpickle de los modelos.
+
+pandas==3.0.2
+numpy==2.4.4
+scipy==1.17.1
+matplotlib==3.10.9
+seaborn==0.13.2
+scikit-learn==1.9.0
+xgboost==3.2.0
+joblib==1.5.3
+openpyxl==3.1.5
+jupyterlab==4.5.6
+notebook==7.5.5
