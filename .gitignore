@@ -8,3 +8,6 @@
 # Material de estudio para la defensa (no se entrega)
 **/TP1_hotel_bookings_explicado.ipynb
 **/TP1_paso_a_paso.ipynb
+
+# Dataset pesado de TP3 (228 MB), no versionar
+tp3/data/raw/training.1600000.processed.noemoticon.csv
