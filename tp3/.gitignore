@@ -1,0 +1,18 @@
+# Checkpoints de Jupyter
+.ipynb_checkpoints/
+**/.ipynb_checkpoints/
+
+# Cache de Python
+__pycache__/
+*.pyc
+
+# Datos crudos: el training pesa 228 MB y supera el limite de 100 MB de GitHub.
+# El README documenta el link de descarga y donde ubicar los archivos.
+data/raw/training.1600000.processed.noemoticon.csv
+trainingandtestdata.zip
+
+# Intermedios procesados del training (pesados, se regeneran con la notebook 03)
+data/processed/train_clean.parquet
+
+# NOTA: los modelos (models/*.joblib, ~6 MB) y las predicciones de validacion
+# SI se versionan a proposito, para que 05 y 06 corran sin reentrenar.

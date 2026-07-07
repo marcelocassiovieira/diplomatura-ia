@@ -21,6 +21,8 @@ La clase neutral (`2`) aparece en el archivo de test manual, pero no aparece en 
 
 Desarrollar un flujo de NLP que permita predecir la polaridad de tweets y explicar que patrones del lenguaje diferencian tweets positivos y negativos.
 
+El trabajo puede combinar **analisis de sentimiento** con **analisis de topicos/keywords**, usando sentimiento como eje principal y topicos como capa interpretativa.
+
 ## Objetivos especificos
 
 - Cargar y validar los dos archivos del dataset.
@@ -32,6 +34,7 @@ Desarrollar un flujo de NLP que permita predecir la polaridad de tweets y explic
 - Interpretar que palabras, topicos o patrones explican cada polaridad.
 - Incorporar al menos una metrica vista en clase, preferentemente similitud coseno.
 - Analizar errores y limitaciones, incluyendo ambiguedad y posible sarcasmo.
+- Explorar, como extension, patrones agregados por usuario a partir de la proporcion de tweets positivos y negativos.
 
 ## Modelo recomendado
 
@@ -152,6 +155,7 @@ Interpretar:
 - palabras con mayor peso negativo;
 - top keywords por clase;
 - diferencias entre palabras frecuentes y palabras realmente predictivas.
+- posibles topicos caracteristicos de tweets positivos y negativos.
 
 Esto es importante porque un buen TP no deberia quedarse solo en metricas.
 
@@ -164,11 +168,18 @@ Agregar analisis de topicos liviano:
 - top palabras por clase;
 - top bigramas por clase;
 - TF-IDF promedio por clase;
+- NMF sobre matriz TF-IDF si se quiere entrenar un modelo propio de topicos;
 - wordcloud por sentimiento si suma visualmente.
 
 Objetivo:
 
 - Entender de que hablan los tweets positivos y negativos.
+
+Recomendacion:
+
+- No plantear topicos como objetivo principal.
+- Usarlos para interpretar los resultados del modelo de sentimiento.
+- Si se usa un modelo propio de topicos, preferir NMF con TF-IDF por simplicidad e interpretabilidad en texto corto.
 
 ### B. Analisis de errores y sarcasmo
 
@@ -198,6 +209,29 @@ Opcion:
 - clasificar esa zona como neutral solo a modo exploratorio.
 
 Esto debe presentarse como extension, no como modelo principal.
+
+### D. Analisis agregado por usuario
+
+Usar la columna `user` para analizar si algunos usuarios muestran mayor proporcion de tweets negativos o positivos dentro del corpus.
+
+Score posible:
+
+```text
+pesimismo_observado = tweets_negativos / total_tweets_del_usuario
+```
+
+Cuidados:
+
+- Filtrar usuarios con pocos tweets para evitar rankings inestables.
+- Presentar el resultado como tendencia observada en el dataset, no como diagnostico personal.
+- Revisar ejemplos de tweets de usuarios extremos antes de sacar conclusiones.
+
+Salida posible:
+
+- ranking de usuarios con mayor proporcion negativa;
+- ranking de usuarios con mayor proporcion positiva;
+- distribucion del score por usuario;
+- ejemplos cualitativos de casos representativos.
 
 ## Extensiones opcionales si sobra tiempo
 
@@ -264,6 +298,7 @@ Riesgo:
    - Que lenguaje caracteriza sentimientos positivos y negativos.
    - Similitud coseno para tweets/palabras parecidas.
    - Keywords o topicos principales.
+   - Patrones agregados por usuario si se incluye la extension.
 
 6. **Limitaciones**
    - Neutral no esta en training.
@@ -282,6 +317,12 @@ Hacer:
 
 ```text
 TF-IDF + Logistic Regression + interpretacion + similitud coseno + topicos/keywords + errores
+```
+
+Como extension defendible:
+
+```text
+analisis agregado por usuario para comparar proporcion de sentimiento negativo/positivo
 ```
 
 No hacer como nucleo principal:

@@ -10,6 +10,7 @@ Repositorio de entregas de la Diplomatura en Inteligencia Artificial.
 |---|---|---|---|
 | TP1 | Análisis exploratorio de datos - Hotel Bookings | [TP1_hotel_bookings.ipynb](tp1/TP1_hotel_bookings.ipynb) | Entregado |
 | TP2 | Predicción de fumadores (`smoking`) | [tp2/README.md](tp2/README.md) | Entregado |
+| TP3 | Análisis de sentimiento en tweets (Sentiment140) | [tp3/README.md](tp3/README.md) | En curso |
 
 ## Estructura
 
