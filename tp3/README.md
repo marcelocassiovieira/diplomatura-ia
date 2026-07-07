@@ -30,6 +30,10 @@ completo** (1.600.000 tweets). Las notebooks 01 y 04 lo verifican con `assert`.
 
 ## Estructura
 
+**Notebook principal / presentacion:** [`TP3_presentacion.ipynb`](./TP3_presentacion.ipynb) —
+resume problema, datos, decisiones, resultados y conclusiones, con una demo en vivo
+del modelo. Las notebooks de detalle:
+
 | Notebook | Contenido |
 | --- | --- |
 | [`01_carga_y_validacion.ipynb`](./notebooks/01_carga_y_validacion.ipynb) | Carga completa, distribucion de clases, duplicados y ruido de etiquetas |

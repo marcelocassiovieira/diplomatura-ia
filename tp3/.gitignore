@@ -6,6 +6,9 @@
 __pycache__/
 *.pyc
 
+# Material de estudio para la defensa (no se entrega)
+defensa/
+
 # Datos crudos: el training pesa 228 MB y supera el limite de 100 MB de GitHub.
 # El README documenta el link de descarga y donde ubicar los archivos.
 data/raw/training.1600000.processed.noemoticon.csv
