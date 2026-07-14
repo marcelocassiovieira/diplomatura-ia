@@ -95,7 +95,7 @@ Demograficas, antropometria, presion arterial, panel de laboratorio (colesterol,
 
 <!-- _class: content -->
 
-# Que variables se relacionan con fumar?
+# Que variables muestran senales por clase?
 
 <div class="cols">
 <div class="img-col">
@@ -107,11 +107,13 @@ Demograficas, antropometria, presion arterial, panel de laboratorio (colesterol,
 
 ## Lo que encontramos
 
-Las variables mas correlacionadas con `smoking` son `hemoglobin`, `gtp`, `triglyceride`, `height_cm` y `gender`.
+No sacamos conclusiones desde correlacion Pearson contra `smoking`, porque el target es binario.
 
-## Por que tiene sentido
+Usamos distribuciones por clase y tasas por categoria como lectura exploratoria. Se observan diferencias en `hemoglobin`, `gtp`, `triglyceride`, `height_cm`, `weight_kg` y `gender`.
 
-Son marcadores hepaticos y metabolicos que se alteran con el habito de fumar, mas la diferencia de habito entre hombres y mujeres en este dataset.
+## Como lo usamos
+
+Estas variables quedan como candidatas. La evidencia predictiva se valida despues con el modelo, la matriz de confusion y el F1 de fumadores.
 
 </div>
 </div>
@@ -297,6 +299,21 @@ Con clases desbalanceadas, 0.5 rara vez es el punto optimo. Bajar el umbral hace
 
 <!-- _class: content -->
 
+# Performance en train y validacion
+
+| Threshold | Conjunto | Accuracy | Precision 1 | Recall 1 | F1 1 | ROC-AUC | PR-AUC |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0.50 | Train | 0.9529 | 0.8925 | 0.9909 | 0.9391 | 0.9964 | 0.9939 |
+| 0.50 | Validacion/test | 0.7832 | 0.6661 | 0.8194 | 0.7348 | 0.8745 | 0.7795 |
+| 0.4248 | Train | 0.9254 | 0.8329 | 0.9963 | 0.9073 | 0.9964 | 0.9939 |
+| 0.4248 | Validacion/test | 0.7757 | 0.6415 | 0.8797 | **0.7420** | 0.8745 | 0.7795 |
+
+La diferencia entre train y validacion/test muestra sobreajuste. Por eso la metrica defendible es la de validacion/test, no la de entrenamiento.
+
+---
+
+<!-- _class: content -->
+
 # Que tan bien distingue el modelo
 
 <div class="cols">
@@ -392,6 +409,7 @@ Varias de las features que creamos (`ast_alt_ratio`, `tg_hdl_ratio`, `waist_to_h
 ## Que logramos
 
 - F1 de clase 1 = **0.742** en validacion, con ROC-AUC de 0.875.
+- La performance se reporta en train y validacion/test; train queda mas alto, lo que muestra sobreajuste parcial.
 - Pipeline completo serializado: aplicar el modelo a datos nuevos no requiere reentrenar nada.
 - Decisiones de preprocesamiento documentadas y sin riesgo de filtracion de datos.
 
@@ -401,6 +419,7 @@ Varias de las features que creamos (`ast_alt_ratio`, `tg_hdl_ratio`, `waist_to_h
 ## Limitaciones y mejoras posibles
 
 - El threshold se ajusto sobre el mismo set de validacion (resultado algo optimista).
+- XGBoost sobreajusta parcialmente; se podria regularizar mas o usar una validacion adicional para elegir threshold.
 - Las variables de laboratorio no estan en unidades clinicas reales.
 - Se podria probar LightGBM, calibracion de probabilidades, o una busqueda de hiperparametros mas amplia.
 

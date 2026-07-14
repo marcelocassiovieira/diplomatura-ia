@@ -73,10 +73,10 @@ Para **reproducir solo las predicciones** (con el modelo ya entrenado): ejecutar
 ## Flujo de trabajo
 
 1. **01 - Lectura y discovery**: carga los dos datasets, les da formato (snake_case, tipos correctos) y hace un primer reconocimiento de los datos (nulos, duplicados, columnas constantes, balance del target).
-2. **02 - EDA**: distribuciones, correlaciones con el target, analisis por categorias. Las figuras se guardan en `imgs/`.
+2. **02 - EDA**: distribuciones, correlaciones entre predictores numericos y analisis descriptivo por clase del target. Las figuras se guardan en `imgs/`.
 3. **03 - Preprocesamiento**: define la receta de transformacion (imputacion, one-hot) pero sin aplicarla todavia. El ajuste ocurre en el paso 4, solo con datos de entrenamiento.
 4. **04 - Entrenamiento y optimizacion**: separacion train/validacion, busqueda de hiperparametros de XGBoost con validacion cruzada optimizando F1 de clase 1.
-5. **05 - Validacion**: evaluacion en el set de validacion, ajuste del threshold y graficos de curvas ROC/PR e importancia de variables.
+5. **05 - Validacion**: evaluacion en train y en el set de validacion (para detectar sobreajuste), ajuste del threshold y graficos de curvas ROC/PR e importancia de variables.
 6. **06 - Prediccion**: aplica el modelo a los datos sin etiquetar y exporta `predicciones_smoking.csv`.
 
 ## Principales hallazgos del EDA
@@ -84,7 +84,8 @@ Para **reproducir solo las predicciones** (con el modelo ya entrenado): ejecutar
 - El target tiene un desbalance leve: 63% no fuma, 37% fuma. No es extremo pero hay que tenerlo en cuenta.
 - `oral` vale siempre "Y" en todos los registros, no aporta nada.
 - `hearing_left` y `hearing_right` casi no varian (95% tiene el mismo valor).
-- Las variables mas correlacionadas con fumar son `hemoglobin`, `gtp`, `triglyceride`, `height_cm` y `gender`. En este dataset los fumadores tienden a ser hombres.
+- No usamos correlacion Pearson entre variables continuas y `smoking` para sacar conclusiones, porque `smoking` es binaria. En su lugar miramos distribuciones, medianas y tasas por clase.
+- En los graficos por clase aparecen diferencias descriptivas en `hemoglobin`, `gtp`, `triglyceride`, `height_cm`, `weight_kg` y en la tasa por `gender`; se toman como seniales exploratorias y se validan despues con el modelo.
 - Las variables de laboratorio tienen valores extremos marcados pero no los eliminamos (ver decision abajo).
 
 Figuras en `imgs/`: `dist_target.png`, `hist_numericas.png`, `boxplots_labs.png`, `corr_heatmap.png`, `bivariado_categoricas.png`, `kde_predictores.png`.
@@ -130,32 +131,37 @@ Elegimos **XGBoost** por tener el mejor F1 tanto en validacion cruzada como en e
 
 ## Metricas obtenidas
 
-Evaluacion de XGBoost en el hold-out de validacion (20% de los datos, 10.000 registros):
+Evaluamos XGBoost en **entrenamiento** y en el hold-out de **validacion/test** (20% de los datos, 10.000 registros). Esta comparacion permite ver si el modelo esta sobreajustando.
 
-| Metrica | Valor |
-|---|---|
-| F1 clase 1 (threshold 0.50) | 0.7348 |
-| F1 clase 1 (threshold optimo) | **0.742** |
-| Threshold optimo | 0.4248 |
-| ROC-AUC | 0.8745 |
-| PR-AUC | 0.7795 |
-| Accuracy | 0.7757 |
-| Precision clase 1 | 0.6415 |
-| Recall clase 1 | 0.8797 |
+Con threshold 0.50:
 
-Bajar el threshold de 0.50 a 0.4248 hace que el modelo sea mas agresivo detectando fumadores, lo que sube el F1. El recall de 0.88 significa que el modelo detecta casi 9 de cada 10 fumadores reales.
+| Conjunto | Accuracy | Precision clase 1 | Recall clase 1 | F1 clase 1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 0.9529 | 0.8925 | 0.9909 | 0.9391 | 0.9964 | 0.9939 |
+| Validacion/test | 0.7832 | 0.6661 | 0.8194 | 0.7348 | 0.8745 | 0.7795 |
+
+Con threshold optimizado en validacion (`0.4248`):
+
+| Conjunto | Accuracy | Precision clase 1 | Recall clase 1 | F1 clase 1 | ROC-AUC | PR-AUC |
+|---|---:|---:|---:|---:|---:|---:|
+| Train | 0.9254 | 0.8329 | 0.9963 | 0.9073 | 0.9964 | 0.9939 |
+| Validacion/test | 0.7757 | 0.6415 | 0.8797 | **0.7420** | 0.8745 | 0.7795 |
+
+Bajar el threshold de 0.50 a 0.4248 hace que el modelo sea mas agresivo detectando fumadores, lo que sube el F1 en validacion/test. El recall de 0.88 significa que el modelo detecta casi 9 de cada 10 fumadores reales. La diferencia entre train y validacion indica que hay sobreajuste, esperable en un modelo flexible como XGBoost, por eso las conclusiones se basan en validacion/test.
 
 Sobre los 5.692 registros sin etiquetar el modelo predice 53% no fumadores y 47% fumadores. El resultado esta en `data/processed/predicciones_smoking.csv` con columnas `id` y `smoking_prediction`.
 
 ## Conclusiones
 
-- XGBoost con hiperparametros optimizados logra un F1 de clase 1 de 0.742 y un ROC-AUC de 0.875 en el set de validacion.
+- XGBoost con hiperparametros optimizados logra un F1 de clase 1 de 0.742 y un ROC-AUC de 0.875 en el set de validacion/test.
+- La comparacion train vs validacion/test muestra sobreajuste: el F1 clase 1 baja de 0.9073 en train a 0.7420 en validacion/test con el threshold elegido.
 - Las variables mas usadas por el modelo son `ast_alt_ratio`, `hemoglobin`, `triglyceride` y `fasting_blood_sugar`, lo que tiene sentido biologico con el tabaquismo.
 - El pipeline queda serializado y puede aplicarse a datos nuevos sin reentrenar nada.
 
 ## Limitaciones y posibles mejoras
 
 - El threshold lo ajustamos sobre el mismo set de validacion, asi que esa mejora de 0.7348 a 0.742 es un poco optimista.
+- XGBoost sobreajusta parcialmente: train queda bastante por encima de validacion/test. Para mejorar esto se podria regularizar mas, reducir profundidad o usar una validacion adicional para elegir threshold.
 - Las variables de laboratorio vienen en una escala que no corresponde a sus unidades clinicas reales, lo que limita la interpretacion de los valores absolutos.
 - Se podria explorar LightGBM, calibracion de probabilidades o una busqueda de hiperparametros mas amplia para mejorar el F1.
 
