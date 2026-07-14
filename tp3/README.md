@@ -69,9 +69,15 @@ Ejecutar en orden con el venv del proyecto:
 
 | Evaluacion | accuracy | precision | recall | F1 |
 | --- | ---: | ---: | ---: | ---: |
+| Train del modelo de desarrollo (1.440.000) | 0,8482 | 0,8420 | 0,8573 | 0,8495 |
 | Validacion (160.000 tweets no vistos) | 0,8251 | 0,8195 | 0,8338 | 0,8266 |
 | Test manual (359 tweets, dominio distinto) | 0,8329 | 0,8050 | 0,8846 | 0,8429 |
 | Extension: 3 clases por umbral (498 tweets) | 0,558 | — | — | — |
+
+- **Train vs validacion (chequeo de overfitting)**: el mismo modelo evaluado en su
+  propio train y en validacion difiere en ~2,3 puntos de accuracy — no hay
+  sobreajuste (regularizacion L2 + 1,44 M de ejemplos). Que el train quede en ~0,85
+  (lejos de 1,0) refleja el techo por ruido de etiquetas del dataset.
 
 - El desempenio **se sostiene fuera del dominio de entrenamiento** (test manual
   etiquetado a mano sobre marcas/productos), senial de que el modelo aprendio
