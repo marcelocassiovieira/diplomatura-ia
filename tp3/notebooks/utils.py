@@ -83,18 +83,25 @@ def cargar_test() -> pd.DataFrame:
 
 
 def limpiar_tweets(textos: pd.Series) -> pd.Series:
-    """Limpieza minima y vectorizada de tweets, pensada para TF-IDF.
+    """Limpieza de tweets. Cada decision se tomo mirando ejemplos reales del dataset:
 
-    Decisiones (ver RECOMENDACION_FINAL.md):
-      1. Desescapa las entidades HTML mas comunes del dataset (&amp;, &lt;, ...).
-      2. Pasa todo a minusculas.
-      3. Reemplaza URLs por el token `xxurl` y menciones por `xxuser`: conserva la
-         senial "este tweet menciona a alguien / tiene un link" (46% de los tweets
-         tienen menciones) sin retener usuarios o dominios individuales.
-      4. Conserva la palabra de los hashtags (#happy -> happy): aportan semantica.
-      5. Quita apostrofes pegando la contraccion (can't -> cant, don't -> dont):
-         el tokenizador default de scikit-learn partiria "can't" en "can" + "t" y
-         se perderia la negacion, que es una senial clave de sentimiento.
+      1. Desescapa las entidades HTML mal formadas (&amp;, &quot;, ...): son un
+         error de formato del texto, no contenido real del tweet.
+      2. Pasa todo a minusculas: "Good" y "good" deben contar como la misma palabra.
+      3. Reemplaza menciones @usuario por `usuariomencionado` y URLs por `linkweb`.
+         Se prueba borrarlas directamente, pero en tweets donde la mencion cumple
+         una funcion gramatical (ej. "@user loves @otro more" -> "loves more") se
+         pierde la estructura de la oracion. Reemplazar por una palabra fija
+         mantiene la estructura sin agregar cientos de miles de usuarios/dominios
+         unicos al vocabulario (46% de los tweets tienen mencion, 4,8% tienen URL).
+      4. Conserva la palabra de los hashtags, solo saca el simbolo # (#happy ->
+         happy): son parte real del contenido del tweet, no ruido externo.
+      5. Pega las contracciones en vez de expandirlas (don't -> dont, can't ->
+         cant): el vectorizador de scikit-learn corta por el apostrofe y la
+         negacion se pierde (don't -> "don" + "t", y la "t" se descarta por
+         demasiado corta). Se prefirio pegar en vez de expandir a la forma larga
+         (do not) por ser mas simple y no depender de una lista de casos
+         ambiguos (it's = it is / it has).
       6. Elimina el resto de la puntuacion y colapsa espacios.
 
     Se usa la API .str de pandas (vectorizada) porque un apply fila a fila sobre
@@ -105,8 +112,8 @@ def limpiar_tweets(textos: pd.Series) -> pd.Series:
     t = t.str.replace("&lt;", "<", regex=False)
     t = t.str.replace("&gt;", ">", regex=False)
     t = t.str.lower()
-    t = t.str.replace(r"https?://\S+|www\.\S+", " xxurl ", regex=True)
-    t = t.str.replace(r"@\w+", " xxuser ", regex=True)
+    t = t.str.replace(r"https?://\S+|www\.\S+", " linkweb ", regex=True)
+    t = t.str.replace(r"@\w+", " usuariomencionado ", regex=True)
     t = t.str.replace(r"#(\w+)", r"\1", regex=True)
     t = t.str.replace(r"(\w)'(\w)", r"\1\2", regex=True)
     t = t.str.replace(r"[^a-z0-9\s]", " ", regex=True)

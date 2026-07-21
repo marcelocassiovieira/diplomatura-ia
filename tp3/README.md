@@ -3,10 +3,8 @@
 ## Objetivo
 
 Construir un flujo de NLP que prediga la **polaridad** (negativo/positivo) de un tweet
-a partir de su texto, y complementarlo con un analisis interpretativo del lenguaje:
-que palabras definen cada sentimiento, de que hablan los tweets de cada clase, que
-errores comete el modelo y que dicen esos errores (sarcasmo, ambiguedad, ruido de
-etiquetas).
+a partir de su texto, y complementarlo con un analisis interpretativo de que palabras
+definen cada sentimiento y como interpretarlas con similitud coseno.
 
 ## Dataset
 
@@ -30,18 +28,14 @@ completo** (1.600.000 tweets). Las notebooks 01 y 04 lo verifican con `assert`.
 
 ## Estructura
 
-**Notebook principal / presentacion:** [`TP3_presentacion.ipynb`](./TP3_presentacion.ipynb) —
-resume problema, datos, decisiones, resultados y conclusiones, con una demo en vivo
-del modelo. Las notebooks de detalle:
-
 | Notebook | Contenido |
 | --- | --- |
-| [`01_carga_y_validacion.ipynb`](./notebooks/01_carga_y_validacion.ipynb) | Carga completa, distribucion de clases, duplicados y ruido de etiquetas |
-| [`02_eda.ipynb`](./notebooks/02_eda.ipynb) | Longitud de tweets, palabras y bigramas por clase, seniales de Twitter |
-| [`03_preprocesamiento.ipynb`](./notebooks/03_preprocesamiento.ipynb) | Limpieza documentada y persistencia en parquet |
-| [`04_entrenamiento.ipynb`](./notebooks/04_entrenamiento.ipynb) | TF-IDF (1-2 gramas) + Logistic Regression; split 90/10 y reentrenamiento con el 100% |
-| [`05_evaluacion.ipynb`](./notebooks/05_evaluacion.ipynb) | Metricas mandatorias, test manual, extension neutral por umbral |
-| [`06_interpretacion.ipynb`](./notebooks/06_interpretacion.ipynb) | Coeficientes, **similitud coseno**, topicos NMF, sarcasmo, analisis por usuario |
+| [`01_carga_y_validacion.ipynb`](./notebooks/01_carga_y_validacion.ipynb) | Carga completa, distribucion de clases, y analisis de calidad de las etiquetas |
+| [`02_eda.ipynb`](./notebooks/02_eda.ipynb) | Longitud de tweets, palabras/bigramas por clase, signos de puntuacion |
+| [`03_preprocesamiento.ipynb`](./notebooks/03_preprocesamiento.ipynb) | Limpieza documentada (7 decisiones justificadas) y persistencia en parquet |
+| [`04_entrenamiento.ipynb`](./notebooks/04_entrenamiento.ipynb) | TF-IDF (1-2 gramas) + Logistic Regression; split 90/10, chequeo de overfitting y reentrenamiento con el 100% |
+| [`05_evaluacion.ipynb`](./notebooks/05_evaluacion.ipynb) | Metricas mandatorias, comparacion contra un baseline, matriz de confusion, test manual |
+| [`06_interpretacion.ipynb`](./notebooks/06_interpretacion.ipynb) | Coeficientes del modelo y **similitud coseno** (metrica de clase obligatoria) |
 
 `notebooks/utils.py` centraliza semilla, rutas y la funcion de limpieza. Los modelos
 entrenados quedan en `models/` (se versionan, ~6 MB) y los graficos en `imgs/`.
@@ -52,61 +46,91 @@ Ejecutar en orden con el venv del proyecto:
 .venv/bin/jupyter nbconvert --execute --to notebook --inplace notebooks/*.ipynb
 ```
 
-## Decisiones principales
+## Analisis de calidad de datos (notebook 01)
 
-- **Modelo binario**: el training no tiene neutral; forzar 3 clases seria entrenar
-  sin datos de una clase.
-- **TF-IDF + Logistic Regression**: eficiente para 1,6 M de textos cortos e
-  interpretable (los coeficientes son pesos por n-grama).
-- **Split con shuffle + estratificacion**: el archivo viene ordenado por clase.
-- **Limpieza conservadora**: URLs y menciones se tokenizan (`xxurl`, `xxuser`),
-  hashtags conservan la palabra, **no** se remueven stopwords y los apostrofes se
-  pegan (`can't` -> `cant`) para no perder negaciones.
-- **Duplicados con etiquetas conflictivas (~2.225 textos) se conservan**: la consigna
-  exige datos completos; se documentan como techo de performance.
+El dataset se etiqueto automaticamente segun si el tweet original tenia un
+emoticon (`:)` o `:(`), que despues fue borrado del texto. Eso genera errores que se
+verificaron con ejemplos concretos: tweets con tono neutral o sarcastico etiquetados
+como si tuvieran una polaridad clara (por ejemplo "Hiccups. Just what I need before
+retiring to my reading room", etiquetado negativo).
 
-## Resultados
+Como evidencia dura, se buscaron textos identicos que aparecen mas de una vez con
+etiquetas opuestas: 2.225 textos (~6.895 filas, 0,43% del dataset). Esa cifra se
+trata como un **piso**, no como el total real del ruido: solo detecta duplicados
+exactos, y ya se habian encontrado a mano otros casos ambiguos que no son duplicados
+exactos. Por eso no se eliminan esos registros del dataset (ademas de que la consigna
+exige usar todos los datos): sacar solo los duplicados exactos daria una falsa
+sensacion de haber limpiado el ruido.
+
+## Decisiones de preprocesamiento (notebook 03)
+
+Cada decision se tomo despues de ver un ejemplo concreto del problema que resolvia:
+
+| Elemento | Decision | Motivo |
+| --- | --- | --- |
+| Negaciones (`not`, `don't`, `no`) | Conservar | Sin ellas no se distingue `good` de `not good`. Confirmado despues con los coeficientes del modelo (ver mas abajo). |
+| Apostrofes en contracciones | Pegar (`don't` -> `dont`), no expandir | El vectorizador de scikit-learn corta por el apostrofe y pierde la negacion (`don't` -> `don` + `t`, la `t` se descarta). |
+| Menciones `@usuario` | Reemplazar por `usuariomencionado` | Borrar rompe la estructura de la oracion en tweets donde la mencion es sujeto (`@user loves @otro more` -> `loves more`). |
+| URLs | Reemplazar por `linkweb` | Mismo criterio que las menciones. |
+| HTML mal formado (`&amp;`, `&quot;`) | Corregir | No es contenido real del tweet, es un error de formato. |
+| Hashtags | Sacar el `#`, conservar la palabra | Es contenido real del tweet, a diferencia de una mencion. |
+| Mayusculas | Pasar todo a minusculas | `Good` y `good` deben contar como la misma palabra. |
+
+## Resultados (notebook 05)
 
 | Evaluacion | accuracy | precision | recall | F1 |
 | --- | ---: | ---: | ---: | ---: |
-| Train del modelo de desarrollo (1.440.000) | 0,8482 | 0,8420 | 0,8573 | 0,8495 |
-| Validacion (160.000 tweets no vistos) | 0,8251 | 0,8195 | 0,8338 | 0,8266 |
-| Test manual (359 tweets, dominio distinto) | 0,8329 | 0,8050 | 0,8846 | 0,8429 |
-| Extension: 3 clases por umbral (498 tweets) | 0,558 | — | — | — |
+| Train del modelo de desarrollo (1.440.000) | 0,8466 | 0,8399 | 0,8564 | 0,8481 |
+| Validacion (160.000 tweets no vistos) | 0,8249 | 0,8188 | 0,8343 | 0,8265 |
 
-- **Train vs validacion (chequeo de overfitting)**: el mismo modelo evaluado en su
-  propio train y en validacion difiere en ~2,3 puntos de accuracy — no hay
-  sobreajuste (regularizacion L2 + 1,44 M de ejemplos). Que el train quede en ~0,85
-  (lejos de 1,0) refleja el techo por ruido de etiquetas del dataset.
+**Por que el accuracy solo no alcanza**: un modelo que siempre predijera "positivo"
+sin leer el tweet, en este dataset balanceado 50/50, acertaria 50% (acierta toda una
+clase y falla toda la otra). El modelo entrenado saca 82%, muy por encima de ese
+baseline, señal de que aprende algo real del texto.
 
-- El desempenio **se sostiene fuera del dominio de entrenamiento** (test manual
-  etiquetado a mano sobre marcas/productos), senial de que el modelo aprendio
-  vocabulario de sentimiento general.
-- Los n-gramas mas predictivos son emocionales e inequivocos (`sad`, `poor`,
-  `gutted` vs `thanks`, `smiling`, `blessed`) y varios **bigramas con negacion**
-  (`not happy`, `not bad`, `cant wait`), validando conservar negaciones y usar
-  `ngram_range=(1,2)`.
-- **Similitud coseno** (metrica vista en clase): los centroides de ambas clases son
-  muy parecidos (cos = 0,894) — las polaridades comparten casi todo el vocabulario y
-  solo una fraccion chica de terminos carga el sentimiento. Ademas permitio
-  recuperar tweets casi identicos con etiquetas opuestas (ruido de etiquetado).
-- **Topicos (NMF)**: los negativos giran alrededor de trabajo/estudio, salud, extraniar
-  y fallas; los positivos alrededor de saludos, agradecimientos, humor y planes.
-- **Neutral por umbral de incertidumbre**: recupera poco (recall neutral 0,19 con
-  delta 0,15) — "dudar" no es lo mismo que "ser neutral"; queda como limitacion.
+**Matriz de confusion (validacion, 160.000 tweets)**: 132.011 tweets acertados y
+27.989 errados. Los dos tipos de error (14.697 negativos predichos como positivos,
+13.292 positivos predichos como negativos) son parecidos entre si, sin sesgo fuerte
+hacia un lado — consistente con que precision y recall tambien salen parecidos entre
+las dos clases (negativo: precision 0,8309/recall 0,8163; positivo: precision
+0,8195/recall 0,8338).
+
+**Chequeo de overfitting**: la brecha entre train y validacion es de ~2,2 puntos de
+accuracy — no hay sobreajuste relevante.
+
+## Interpretacion (notebook 06)
+
+**Coeficientes del modelo**: entre los n-gramas que mas empujan a "positivo" aparecen
+varios con negacion (`cant wait`, `not bad`, `no problem`, `no need`, `dont need`).
+Esto confirma la decision de conservar las negaciones tomada antes de entrenar el
+modelo: si se hubiera sacado el `not` de `not bad`, el bigrama hubiera quedado solo
+como `bad`, aprendido como negativo.
+
+**Similitud coseno** (metrica de clase obligatoria): mide que tan parecidos son dos
+tweets segun el vocabulario que comparten (0 = nada en comun, 1 = mismo vocabulario).
+Se aplico de dos formas:
+- Buscar tweets vecinos de una consulta (ej. un tweet con "freakin cooool i love
+  twitter" encontro vecinos por compartir la palabra "freakin" y otros por compartir
+  la frase "i love twitter").
+- Buscar posibles etiquetas mal puestas: sobre una muestra de 300 tweets negativos,
+  se encontro 1 caso con similitud maxima (coseno=1,000) y etiqueta opuesta, pero
+  resulto ser el mismo tipo de caso que los duplicados exactos de la notebook 01, no
+  un hallazgo nuevo. Limitacion: 300 tweets es una muestra chica frente al total.
 
 ## Limitaciones
 
-1. **Sarcasmo e ironia**: palabras positivas en contexto negativo (p. ej.
-   *"Great. History. Yay..."*) son estructuralmente invisibles para bolsa de palabras;
-   ~1.100 errores de validacion siguen ese patron.
-2. **Clase neutral ausente en training**: no se puede aprender; la aproximacion por
-   umbral tiene techo bajo.
-3. **Ruido de etiquetado automatico**: tweets identicos con etiquetas opuestas y
-   falsos positivos obvios (tweets de "thanks" etiquetados negativos) ponen un techo
-   a cualquier modelo sobre este dataset.
+1. **Ruido de etiquetado automatico**: al menos 0,43% del dataset son textos
+   identicos con etiquetas opuestas (piso, no total); eso pone un techo a cualquier
+   modelo entrenado sobre este dataset.
+2. **Clase neutral ausente en training**: el modelo principal es binario porque no
+   hay ejemplos de la clase neutral para entrenar con ella.
+3. **Alcance recortado**: por tiempo, esta entrega no incluye modelado de topicos,
+   analisis de sarcasmo ni analisis por usuario, que habian sido explorados pero se
+   priorizo profundizar el analisis obligatorio (calidad de datos, preprocesamiento,
+   evaluacion, similitud coseno) en vez de cubrir mas superficie con menos detalle.
 
 ## Mejora futura
 
-Usar un modelo de lenguaje preentrenado (embeddings contextuales) para capturar
-ironia y contexto, y sumar datos neutrales reales para plantear las 3 clases.
+Extender el analisis de errores (sarcasmo, ironia) y el modelado de topicos con el
+mismo nivel de profundidad que el resto del trabajo, y sumar datos neutrales reales
+para plantear el problema de 3 clases.
